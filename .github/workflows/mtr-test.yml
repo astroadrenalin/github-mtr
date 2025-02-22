@@ -1,0 +1,24 @@
+name: Run MTR Test
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  mtr-test:
+    runs-on: ubuntu-latest  # Use GitHub's Ubuntu runner
+    steps:
+      - name: Install MTR
+        run: sudo apt-get update && sudo apt-get install -y mtr
+
+      - name: Run MTR to example.com
+        run: sudo mtr --report arvancloud.ir
+
+      - name: Save MTR Output
+        run: sudo mtr --report arvancloud.ir > mtr_output.txt
+
+      - name: Upload MTR Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtr-report
+          path: mtr_output.txt
+
