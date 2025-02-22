@@ -1,24 +1,45 @@
-name: Run MTR Test
+name: MTR and Curl Test
 
 on:
-  workflow_dispatch:  # Allows manual triggering
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 * * * *"  # Runs every hour
+  workflow_dispatch:  # Allows manual execution
 
 jobs:
-  mtr-test:
-    runs-on: ubuntu-latest  # Use GitHub's Ubuntu runner
+  network-test:
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Install MTR
-        run: sudo apt-get update && sudo apt-get install -y mtr
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Run MTR to example.com
-        run: sudo mtr --report arvancloud.ir
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y mtr curl
 
-      - name: Save MTR Output
-        run: sudo mtr --report arvancloud.ir > mtr_output.txt
+      - name: Run MTR tests
+        run: |
+          echo "Running MTR to arvancloud.ir..." > mtr_results.txt
+          mtr --report --report-cycles=10 arvancloud.ir >> mtr_results.txt
 
-      - name: Upload MTR Report
+          echo "\nRunning MTR to google.com..." >> mtr_results.txt
+          mtr --report --report-cycles=10 google.com >> mtr_results.txt
+
+      - name: Run Curl tests
+        run: |
+          echo "Running Curl to arvancloud.ir..." > curl_results.txt
+          curl -I -L arvancloud.ir >> curl_results.txt
+
+          echo "\nRunning Curl to google.com..." >> curl_results.txt
+          curl -I -L google.com >> curl_results.txt
+
+      - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: mtr-report
-          path: mtr_output.txt
+          name: network-test-results
+          path: |
+            mtr_results.txt
+            curl_results.txt
 
